@@ -1,7 +1,23 @@
 #include <math.h>
 #include <stdio.h>
 #include <string.h>
-#include <unistd.h>
+#define _UNISTD_H
+#include <time.h>
+#include <io.h>
+#include <windows.h>
+
+void usleep(__int64 usec) 
+{ 
+    HANDLE timer; 
+    LARGE_INTEGER ft; 
+
+    ft.QuadPart = -(1000*usec); // Convert to 100 nanosecond interval, negative value indicates relative time
+
+    timer = CreateWaitableTimer(NULL, TRUE, NULL); 
+    SetWaitableTimer(timer, &ft, 0, NULL, NULL, 0); 
+    WaitForSingleObject(timer, INFINITE); 
+    CloseHandle(timer); 
+}
 
 float A, B, C;
 
