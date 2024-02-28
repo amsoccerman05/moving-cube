@@ -3,8 +3,14 @@
 #include <string.h>
 #include <unistd.h>
 
+// make a moving cube using c
+// compile with gcc spin.c -o spin -lm
+// run with ./spin
+
+// A, B, C are the angles of rotation
 float A, B, C;
 
+// cubeWidth is the width of the cube
 float cubeWidth = 10;
 int width = 160, height = 44;
 float zBuffer[160 * 44];
@@ -13,13 +19,16 @@ int backgroundASCIICode = ' ';
 int distanceFromCam = 100;
 float K1 = 40;
 
+// incrementSpeed is the speed of the rotation
 float incrementSpeed = 0.6;
 
+// x, y, z are the coordinates of the cube
 float x, y, z;
 float ooz;
 int xp, yp;
 int idx;
 
+// calculateX, calculateY, calculateZ are the functions to calculate the coordinates of the cube
 float calculateX(int i, int j, int k) {
     return j * sin(A) * sin(B) * cos(C) - k * cos(A) * sin(B) * cos(C) + j * cos(A) * sin(C) + k * sin(A) + sin(C) + i * cos(B) * cos(C);
 }
@@ -32,7 +41,7 @@ float calculateZ(int i, int j, int k) {
     return k * cos(A) * cos(B) - j * sin(A) * cos(B) + i * sin(B);
 }
 
-void calculateForSurface(float cubeX, float cubeY, float cubeZ, int ch) {
+void calculateForSurface(float cubeX, float cubeY, float cubeZ, int ch) { 
     x = calculateX(cubeX, cubeY, cubeZ);
     y = calculateY(cubeX, cubeY, cubeZ);
     z = calculateZ(cubeX, cubeY, cubeZ);
