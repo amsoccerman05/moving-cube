@@ -61,22 +61,27 @@ void calculateForSurface(float cubeX, float cubeY, float cubeZ, int ch) {
 int main() {
     printf("\x1b[2J");
     while (1) {
-        memset(buffer, backgroundASCIICode, width * height);
-        memset(buffer, 0, width * height * 4);
-        for (float cubeX = -cubeWidth; cubeX < cubeWidth; cubeX += incrementSpeed) {
-            for (float cubeY = -cubeWidth; cubeY < cubeWidth; cubeY += incrementSpeed) {
-                calculateForSurface(cubeX, cubeY, -cubeWidth, '.');
-                calculateForSurface(cubeWidth, cubeY, cubeX, '$');
-                calculateForSurface(-cubeWidth, cubeY, -cubeX, '~');
-                calculateForSurface(-cubeX, cubeY, cubeWidth, '#');
-                calculateForSurface(cubeX, -cubeWidth, -cubeY, ':');
-                calculateForSurface(cubeX, cubeWidth, cubeY, '+');
-            }
+    memset(buffer, backgroundASCIICode, width * height);
+    memset(buffer, 0, width * height * 4);
+    for (float cubeX = -cubeWidth; cubeX < cubeWidth; cubeX += incrementSpeed) {
+        for (float cubeY = -cubeWidth; cubeY < cubeWidth; cubeY += incrementSpeed) {
+            calculateForSurface(cubeX, cubeY, -cubeWidth, '.');
+            calculateForSurface(cubeWidth, cubeY, cubeX, '$');
+            calculateForSurface(-cubeWidth, cubeY, -cubeX, '~');
+            calculateForSurface(-cubeX, cubeY, cubeWidth, '#');
+            calculateForSurface(cubeX, -cubeWidth, -cubeY, ':');
+            calculateForSurface(cubeX, cubeWidth, cubeY, '+');
         }
-        printf("\x1b[H");
-        for (int k = 0; k < width * height; k++) {
-            putchar(k % width ? buffer[k] : 10);
-        }
+    }
+    printf("A: %f, B: %f, C: %f\n", A, B, C); // Add this line to print the rotation angles
+    printf("\x1b[H");
+    for (int k = 0; k < width * height; k++) {
+        putchar(k % width ? buffer[k] : 10);
+    }
+    A += 0.005;
+    B += 0.005;
+    usleep(1000);
+
         A += 0.005;
         B += 0.005;
         usleep(1000);
