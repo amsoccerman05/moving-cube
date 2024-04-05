@@ -73,7 +73,7 @@ int main() {
             calculateForSurface(cubeX, cubeWidth, cubeY, '+');
         }
     }
-    printf("A: %f, B: %f, C: %f\n", A, B, C); // Add this line to print the rotation angles
+    printf("A: %f, B: %f, C: %f\n", A, B, C);
     printf("\x1b[H");
     for (int k = 0; k < width * height; k++) {
         putchar(k % width ? buffer[k] : 10);
