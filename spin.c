@@ -3,88 +3,82 @@
 #include <string.h>
 #include <unistd.h>
 
-// make a moving cube using c
-// compile with gcc spin.c -o spin -lm
-// run with ./spin
+static float A = 0.f, B = 0.f, C = 0.f;
 
-// A, B, C are the angles of rotation
-float A, B, C;
+static const float cubeWidth = 10.f;
+// If your terminal is small, try width=80, height=24
+static const int width = 80, height = 24;
 
-// cubeWidth is the width of the cube
-float cubeWidth = 10;
-int width = 160, height = 44;
-float zBuffer[160 * 44];
-char buffer[160 *44];
-int backgroundASCIICode = ' ';
-int distanceFromCam = 100;
-float K1 = 40;
+static float zBuffer[80 * 24];
+static char  buffer [80 * 24];
 
-// incrementSpeed is the speed of the rotation
-float incrementSpeed = 0.6;
+static const int backgroundASCIICode = ' ';
+static const float K1 = 40.f;
+static const float incrementSpeed = 0.6f;
 
-// x, y, z are the coordinates of the cube
-float x, y, z;
-float ooz;
-int xp, yp;
-int idx;
+static float x, y, z, ooz;
+static int xp, yp, idx;
 
-// calculateX, calculateY, calculateZ are the functions to calculate the coordinates of the cube
-float calculateX(int i, int j, int k) {
-    return j * sin(A) * sin(B) * cos(C) - k * cos(A) * sin(B) * cos(C) + j * cos(A) * sin(C) + k * sin(A) + sin(C) + i * cos(B) * cos(C);
+// Rotation helpers use float (you pass floats)
+static inline float calculateX(float i, float j, float k) {
+    return j * sinf(A) * sinf(B) * cosf(C) - k * cosf(A) * sinf(B) * cosf(C)
+         + j * cosf(A) * sinf(C) + k * sinf(A) + i * cosf(B) * cosf(C);
+}
+static inline float calculateY(float i, float j, float k) {
+    return j * cosf(A) * cosf(C) + k * sinf(A) * cosf(C)
+         - j * sinf(A) * sinf(B) * sinf(C) + k * cosf(A) * sinf(B) * sinf(C)
+         - i * cosf(B) * sinf(C);
+}
+static inline float calculateZ(float i, float j, float k) {
+    return k * cosf(A) * cosf(B) - j * sinf(A) * cosf(B) + i * sinf(B);
 }
 
-float calculateY(int i, int j, int k) {
-    return j * cos(A) * cos(C) + k * sin(A) * cos(C) - j * sin(A) * sin(B) * sin(C) + k * cos(A) * sin(B) * sin(C) - i * cos(B) * sin(C);
-}
+static inline void plotSurface(float cx, float cy, float cz, char ch) {
+    x = calculateX(cx, cy, cz);
+    y = calculateY(cx, cy, cz);
+    z = calculateZ(cx, cy, cz) + 100.f;      // push cube in front of camera
+    if (z <= 1e-3f) return;                   // avoid divide-by-zero / behind camera
 
-float calculateZ(int i, int j, int k) {
-    return k * cos(A) * cos(B) - j * sin(A) * cos(B) + i * sin(B);
-}
-
-void calculateForSurface(float cubeX, float cubeY, float cubeZ, int ch) { 
-    x = calculateX(cubeX, cubeY, cubeZ);
-    y = calculateY(cubeX, cubeY, cubeZ);
-    z = calculateZ(cubeX, cubeY, cubeZ);
-    ooz = 1/z;
-    xp = (int)(width / 2 - 2 * cubeWidth + K1 * ooz * x * 2);
+    ooz = 1.f / z;
+    xp = (int)(width  / 2 + K1 * ooz * x * 2.f);
     yp = (int)(height / 2 + K1 * ooz * y);
 
+    if (xp < 0 || xp >= width || yp < 0 || yp >= height) return;
     idx = xp + yp * width;
-    if (idx >= 0 && idx < width * height) {
-        if (ooz > zBuffer[idx]) {
-            zBuffer[idx] = ooz;
-            buffer[idx] = ch;
-        }
+    if (ooz > zBuffer[idx]) {
+        zBuffer[idx] = ooz;
+        buffer[idx] = ch;
     }
 }
 
-int main() {
-    printf("\x1b[2J");
+int main(void) {
+    printf("\x1b[2J"); // clear
     while (1) {
-    memset(buffer, backgroundASCIICode, width * height);
-    memset(buffer, 0, width * height * 4);
-    for (float cubeX = -cubeWidth; cubeX < cubeWidth; cubeX += incrementSpeed) {
-        for (float cubeY = -cubeWidth; cubeY < cubeWidth; cubeY += incrementSpeed) {
-            calculateForSurface(cubeX, cubeY, -cubeWidth, '.');
-            calculateForSurface(cubeWidth, cubeY, cubeX, '$');
-            calculateForSurface(-cubeWidth, cubeY, -cubeX, '~');
-            calculateForSurface(-cubeX, cubeY, cubeWidth, '#');
-            calculateForSurface(cubeX, -cubeWidth, -cubeY, ':');
-            calculateForSurface(cubeX, cubeWidth, cubeY, '+');
+        // clear buffers for this frame
+        for (int i = 0; i < width * height; ++i) {
+            zBuffer[i] = 0.f;
+            buffer[i]  = backgroundASCIICode;
         }
-    }
-    printf("A: %f, B: %f, C: %f\n", A, B, C);
-    printf("\x1b[H");
-    for (int k = 0; k < width * height; k++) {
-        putchar(k % width ? buffer[k] : 10);
-    }
-    A += 0.005;
-    B += 0.005;
-    usleep(1000);
 
-        A += 0.005;
-        B += 0.005;
-        usleep(1000);
+        for (float cx = -cubeWidth; cx <= cubeWidth; cx += incrementSpeed) {
+            for (float cy = -cubeWidth; cy <= cubeWidth; cy += incrementSpeed) {
+                plotSurface(cx,  cy, -cubeWidth, '.');  // front
+                plotSurface(cubeWidth, cy,  cx,       '$'); // right
+                plotSurface(-cubeWidth, cy, -cx,      '~'); // left
+                plotSurface(-cx,  cy,  cubeWidth,     '#'); // back
+                plotSurface(cx, -cubeWidth, -cy,       ':'); // bottom
+                plotSurface(cx,  cubeWidth,  cy,       '+'); // top
+            }
+        }
+
+        printf("\x1b[H"); // cursor home
+        for (int k = 0; k < width * height; ++k)
+            putchar((k % width) ? buffer[k] : '\n');
+
+        A += 0.005f;
+        B += 0.005f;
+        C += 0.003f;
+        usleep(10000); // ~10ms
     }
     return 0;
 }
